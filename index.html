@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>getValue Function</title>
+</head>
+<body>
+    <script>
+        // const db_url = 'http://data.exactspace.co/api/v1/datapoints/query';
+
+        function getValue(tagId, min) {
+            const payload = {
+  "metrics": [
+    {
+      "tags": {},
+      "name": "metric:HIHKDTDIGITWIN03:cpu",
+      "aggregators": [
+        {
+          "name": "sum",
+          "sampling": {
+            "value": "1",
+            "unit": "milliseconds"
+          }
+        }
+      ]
+    }
+  ],
+  "plugins": [],
+  "cache_time": 0,
+  "start_relative": {
+    "value": "1",
+    "unit": "hours"
+  }
+}
+
+            const db_url = 'http://data.exactspace.co/api/v1/datapoints/query'; // Replace with your API URL
+
+            console.log(db_url); // Make sure db_url is defined before this function call
+
+            try {
+                fetch(db_url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    timeout: 10000, // Adjust timeout as needed
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error(`Request failed with status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        if (
+                            data.queries &&
+                            data.queries[0] &&
+                            data.queries[0].results &&
+                            data.queries[0].results[0] &&
+                            data.queries[0].results[0].values
+                        ) {
+                            const datapoints = data.queries[0].results[0].values;
+                            if (datapoints.length > 0) {
+                                const valuelist = [];
+                                for (let i = 0; i < datapoints.length; i++) {
+                                    valuelist.push(parseInt(datapoints[i][1]));
+                                }
+                                console.log(tagId, min, valuelist);
+                                return valuelist;
+                            } else {
+                                console.log(tagId, 'has no data points in kairos');
+                                return 'no data';
+                            }
+                        } else {
+                            console.log('some key error in response');
+                            return 'error';
+                        }
+                    })
+                    .catch((error) => {
+                        console.log('getvalue exception', tagId, error);
+                        return 'error';
+                    });
+            } catch (e) {
+                console.log('getvalue exception', tagId, e);
+                return 'error';
+            }
+        }
+
+        // Example usage:
+        const tagId = 'exampleTag';
+        const minutes = 10;
+        getValue(tagId, minutes);
+    </script>
+</body>
+</html>
